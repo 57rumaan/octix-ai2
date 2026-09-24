@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AETHER AI — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0D12;--surface:#14161D;--raised:#1B1E27;--border:#262A35;
+    --accent:#6C8EF5;--warm:#E8A253;--text:#EDEFF3;--muted:#8891A3;--faint:#565C6D;
+    --font-d:'Space Grotesk',sans-serif;--font-b:'Inter',sans-serif;--font-m:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;}
+  .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:320px;display:flex;flex-direction:column;gap:14px;}
+  .login-card h1{font-family:var(--font-d);font-size:19px;}
+  .login-card p{color:var(--muted);font-size:12.5px;line-height:1.5;}
+  input,select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+  button.primary{background:var(--accent);color:#0B0D12;border:none;border-radius:9px;padding:11px;font-weight:600;font-size:14px;}
+  .error{color:#ff6b6b;font-size:12.5px;display:none;}
+
+  .dash{display:none;}
+  .dash.active{display:block;}
+
+  .topbar{display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;}
+  .hamburger{width:36px;height:36px;border-radius:9px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--text);flex-shrink:0;}
+  .hamburger:hover{background:var(--raised);}
+  .topbar h2{font-family:var(--font-d);font-size:16px;}
+
+  .side{position:fixed;top:0;left:0;bottom:0;width:250px;background:var(--surface);border-right:1px solid var(--border);padding:20px 14px;z-index:40;transform:translateX(-100%);transition:transform .22s ease;}
+  .side.open{transform:translateX(0);}
+  .side-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .side h2{font-family:var(--font-d);font-size:15px;}
+  .side button.close-btn{width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:var(--muted);}
+  .side button.close-btn:hover{background:var(--raised);}
+  .side .nav-btn{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--muted);padding:9px 10px;border-radius:8px;font-size:13.5px;margin-bottom:2px;}
+  .side .nav-btn:hover,.side .nav-btn.active{background:var(--raised);color:var(--text);}
+
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+  .backdrop.open{opacity:1;pointer-events:auto;}
+
+  .content{padding:26px 20px;max-width:720px;margin:0 auto;}
+  .content h2{font-family:var(--font-d);font-size:20px;margin-bottom:6px;}
+  .content .sub{color:var(--muted);font-size:13px;margin-bottom:22px;}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;}
+  .provider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
+  .provider-row h3{font-size:14.5px;}
+  .provider-row .env{font-family:var(--font-m);font-size:11px;color:var(--warm);}
+  .remove-btn{background:transparent;border:none;color:#ff6b6b;font-size:12px;padding:4px 8px;border-radius:6px;flex-shrink:0;}
+  .remove-btn:hover{background:rgba(255,107,107,.1);}
+  .model-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--border);}
+  .model-row input[type=text]{flex:1;padding:7px 10px;font-size:13px;min-width:0;}
+  .model-row .model-id{font-family:var(--font-m);font-size:10.5px;color:var(--muted);flex-shrink:0;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .model-row .x-btn{background:transparent;border:none;color:#ff6b6b;font-size:15px;padding:2px 4px;flex-shrink:0;}
+  .add-btn{width:100%;background:var(--raised);border:1px dashed var(--border);color:var(--muted);padding:12px;border-radius:10px;font-size:13.5px;margin-bottom:14px;}
+  .add-btn:hover{border-color:var(--accent);color:var(--text);}
+  .add-model-btn{margin-top:9px;background:transparent;border:1px dashed var(--border);color:var(--muted);padding:7px 10px;border-radius:8px;font-size:12.5px;width:100%;}
+  .add-model-btn:hover{border-color:var(--accent);color:var(--text);}
+  .save-btn{margin-top:12px;background:var(--raised);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;font-size:13px;}
+  .save-btn:hover{border-color:var(--accent);}
+  textarea{width:100%;min-height:80px;resize:vertical;}
+
+  .group-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+  .group-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;}
+  .group-head h3{font-family:var(--font-d);font-size:16px;}
+  .group-head-actions{display:flex;gap:6px;flex-shrink:0;}
+  .cap-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--border);font-size:13px;}
+  .cap-row .cap-info{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .cap-row .cap-type{font-family:var(--font-m);font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.3px;}
+  .cap-row .cap-target{color:var(--text);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cap-empty{color:var(--faint);font-size:12.5px;padding:7px 0;border-top:1px solid var(--border);}
+  .toggle{width:38px;height:22px;border-radius:11px;background:var(--border);position:relative;cursor:pointer;flex-shrink:0;}
+  .toggle.on{background:var(--accent);}
+  .toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s;}
+  .toggle.on::after{left:18px;}
+  .group-footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-backdrop.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow-y:auto;}
+  .modal h3{font-family:var(--font-d);font-size:15px;margin-bottom:4px;}
+  .modal label{font-size:12px;color:var(--muted);margin-bottom:-4px;}
+  .modal-actions{display:flex;gap:8px;margin-top:6px;}
+  .modal-actions button{flex:1;padding:9px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--raised);color:var(--text);}
+  .modal-actions button.primary{background:var(--accent);color:#0B0D12;border:none;}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1>Admin access</h1>
+    <p>This panel is separate from the chat app and isn't linked from it. Only reachable by URL, and every load still requires the real admin password.</p>
+    <input type="password" id="pw" placeholder="Admin password">
+    <button class="primary" id="loginBtn">Enter</button>
+    <div class="error" id="loginErr">Wrong password.</div>
+  </div>
+</div>
+
+<div class="dash" id="dash">
+  <div class="topbar">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <h2>AETHER AI Admin</h2>
+  </div>
+
+  <div class="backdrop" id="backdrop"></div>
+
+  <div class="side" id="side">
+    <div class="side-header">
+      <h2>Menu</h2>
+      <button class="close-btn" id="closeSideBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <button class="nav-btn" data-tab="providers">Add APIs</button>
+    <button class="nav-btn active" data-tab="groups">Models</button>
+    <button class="nav-btn" data-tab="rules">Global rules</button>
+    <button class="nav-btn" data-tab="users">Users & usage</button>
+  </div>
+
+  <div class="content">
+    <div id="tab-providers" style="display:none">
+      <h2>APIs & raw models</h2>
+      <div class="sub">Register a provider's API key here, then list the model IDs it offers. These don't show up in the chat app by themselves — you build the actual selectable models in the "Models" tab.</div>
+      <button class="add-btn" id="addProviderBtn">+ Add a new API / provider</button>
+      <div id="providerList"></div>
+    </div>
+
+    <div id="tab-groups">
+      <h2>Models</h2>
+      <div class="sub">This is the only thing users see in the chat app's model picker. A model here can be a single AI (just a chat model) or a bundle of several — a chat model, an image generator, etc. — all under one name.</div>
+      <button class="add-btn" id="addGroupBtn">+ Create a model</button>
+      <div id="groupSaveStatus" style="display:none;font-size:12px;margin-bottom:10px;"></div>
+      <div id="groupList"></div>
+    </div>
+
+    <div id="tab-rules" style="display:none">
+      <h2>Global rules</h2>
+      <div class="sub">Applies to every model unless a model has its own rule set.</div>
+      <div class="card">
+        <textarea id="globalRules" placeholder="e.g. Never reveal API keys. Keep replies under 200 words unless asked for more."></textarea>
+        <button class="save-btn" id="saveRules">Save</button>
+      </div>
+    </div>
+
+    <div id="tab-users" style="display:none">
+      <h2>Users & usage</h2>
+      <div class="sub">Signups, login history, per-user chat volume. Connect a real database to populate this.</div>
+      <div class="card" id="usersBox">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="providerModal">
+  <div class="modal">
+    <h3>Add a new API / provider</h3>
+    <label>Provider name (shown to you)</label>
+    <input type="text" id="newProviderLabel" placeholder="e.g. Anthropic, Mistral, ElevenLabs">
+    <label>Environment variable name (holds the API key on your server)</label>
+    <input type="text" id="newProviderEnv" placeholder="e.g. ANTHROPIC_API_KEY">
+    <div class="modal-actions">
+      <button id="cancelProviderBtn">Cancel</button>
+      <button class="primary" id="confirmProviderBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modelModal">
+  <div class="modal">
+    <h3>Add a raw model</h3>
+    <label>Model ID (as the provider's API expects it)</label>
+    <input type="text" id="newModelId" placeholder="e.g. gpt-4o-mini">
+    <label>Reference name (just for you, shown in dropdowns)</label>
+    <input type="text" id="newModelName" placeholder="e.g. Quick Replies">
+    <div class="modal-actions">
+      <button id="cancelModelBtn">Cancel</button>
+      <button class="primary" id="confirmModelBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="groupModal">
+  <div class="modal">
+    <h3>Create a model</h3>
+    <label>Name (shown in the chat app's model picker)</label>
+    <input type="text" id="groupName" placeholder="e.g. AETHER UPGRADED">
+    <div class="modal-actions">
+      <button id="cancelGroupBtn">Cancel</button>
+      <button class="primary" id="confirmGroupBtn">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="capModal">
+  <div class="modal">
+    <h3>Add a model to this bundle</h3>
+    <label>What does it do?</label>
+    <select id="capType">
+      <option value="chat">Chat / text</option>
+      <option value="image">Image generation</option>
+      <option value="video">Video generation</option>
+      <option value="other">Other</option>
+    </select>
+    <label>Which raw model</label>
+    <select id="capModelSelect"></select>
+    <div class="modal-actions">
+      <button id="cancelCapBtn">Cancel</button>
+      <button class="primary" id="confirmCapBtn">Add</button>
+    </div>
+  </div>
+</div>
+  <div class="modal-backdrop" id="actionModal">
+  <div class="modal">
+    <h3>Add a custom quick action</h3>
+    <label>Button label (shown in the "+" menu)</label>
+    <input type="text" id="actionLabel" placeholder="e.g. Summarize this">
+    <label>What it sends</label>
+    <textarea id="actionPrompt" rows="2" placeholder="e.g. Summarize the following in 3 bullet points:"></textarea>
+    <div class="modal-actions">
+      <button id="cancelActionBtn">Cancel</button>
+      <button class="primary" id="confirmActionBtn">Add</button>
+    </div>
+  </div>
+  </div>
+
+<script>
+const loginScreen = document.getElementById('loginScreen');
+const dash = document.getElementById('dash');
+
+document.getElementById('loginBtn').onclick = async () => {
+  const password = document.getElementById('pw').value;
+  const res = await fetch('/api/admin/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ password })
+  });
+  if (res.ok) {
+    loginScreen.style.display = 'none';
+    dash.classList.add('active');
+    loadModels();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+};
+
+const side = document.getElementById('side');
+const backdrop = document.getElementById('backdrop');
+function openSide(){ side.classList.add('open'); backdrop.classList.add('open'); }
+function closeSide(){ side.classList.remove('open'); backdrop.classList.remove('open'); }
+document.getElementById('hamburgerBtn').onclick = openSide;
+document.getElementById('closeSideBtn').onclick = closeSide;
+backdrop.onclick = closeSide;
+
+document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ['providers','groups','rules','users'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = (t === btn.dataset.tab) ? 'block' : 'none';
+    });
+    if (btn.dataset.tab === 'users') loadUsers();
+    closeSide();
+  };
+});
+
+let modelConfig = null;
+
+async function loadModels(){
+  const res = await fetch('/api/admin/models');
+  modelConfig = await res.json();
+  if (!modelConfig.linkedModels) modelConfig.linkedModels = [];
+  document.getElementById('globalRules').value = modelConfig.globalRules || '';
+  renderProviders();
+  renderGroups();
+}
+
+async function saveAll(){
+  const statusEl = document.getElementById('groupSaveStatus');
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.style.color = 'var(--muted)'; statusEl.textContent = 'Saving…'; }
+  try {
+    const res = await fetch('/api/admin/models', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(modelConfig)
+    });
+    if (!res.ok) {
+      let msg = 'Save failed (status ' + res.status + ')';
+      try { const data = await res.json(); if (data.error) msg = 'Save failed: ' + data.error; } catch {}
+      if (statusEl) { statusEl.style.color = '#ff6b6b'; statusEl.textContent = msg; }
+      return false;
+    }
+    if (statusEl) {
+      statusEl.style.color = '#7ee787';
+      statusEl.textContent = 'Saved ✓';
+      setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 1500);
+    }
+    return true;
+  } catch (err) {
+    if (statusEl) { statusEl.style.color = '#ff6b6b'; statusEl.textContent = 'Save failed — could not reach the server.'; }
+    return false;
+  }
+}
+
+function flatModelOptions(){
+  const opts = [];
+  modelConfig.providers.forEach(provider => {
+    provider.models.forEach(model => {
+      opts.push({ value: provider.id + '::' + model.id, label: `${provider.label} — ${model.customName}` });
+    });
+  });
+  return opts;
+}
+
+function renderProviders(){
+  const list = document.getElementById('providerList');
+  list.innerHTML = '';
+  modelConfig.providers.forEach((provider, pIndex) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="provider-row">
+        <div>
+          <h3>${provider.label}</h3>
+          <span class="env">${provider.apiKeyEnv}</span>
+        </div>
+        <button class="remove-btn" data-remove-provider="${pIndex}">Remove</button>
+      </div>
+      <div class="models-container"></div>
+      <button class="add-model-btn" data-add-model="${pIndex}">+ Add a raw model to ${provider.label}</button>
+    `;
+    const modelsContainer = card.querySelector('.models-container');
+    provider.models.forEach((model, mIndex) => {
+      const row = document.createElement('div');
+      row.className = 'model-row';
+      row.innerHTML = `
+        <input type="text" value="${model.customName}" data-field="customName">
+        <span class="model-id">${model.id}</span>
+        <button class="x-btn" data-remove-model="${pIndex}:${mIndex}">✕</button>
+      `;
+      row.querySelector('input').oninput = (e) => { model.customName = e.target.value; };
+      modelsContainer.appendChild(row);
+    });
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll('[data-remove-provider]').forEach(btn => {
+    btn.onclick = async () => {
+      modelConfig.providers.splice(Number(btn.dataset.removeProvider), 1);
+      await saveAll();
+      renderProviders();
+    };
+  });
+  list.querySelectorAll('[data-remove-model]').forEach(btn => {
+    btn.onclick = async () => {
+      const [pIndex, mIndex] = btn.dataset.removeModel.split(':').map(Number);
+      modelConfig.providers[pIndex].models.splice(mIndex, 1);
+      await saveAll();
+      renderProviders();
+    };
+  });
+  list.querySelectorAll('[data-add-model]').forEach(btn => {
+    btn.onclick = () => openModelModal(Number(btn.dataset.addModel));
+  });
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'save-btn';
+  saveBtn.textContent = 'Save changes';
+  saveBtn.onclick = saveAll;
+  list.appendChild(saveBtn);
+}
+
+const providerModal = document.getElementById('providerModal');
+document.getElementById('addProviderBtn').onclick = () => {
+  document.getElementById('newProviderLabel').value = '';
+  document.getElementById('newProviderEnv').value = '';
+  providerModal.classList.add('open');
+};
+document.getElementById('cancelProviderBtn').onclick = () => providerModal.classList.remove('open');
+document.getElementById('confirmProviderBtn').onclick = async () => {
+  const label = document.getElementById('newProviderLabel').value.trim();
+  const apiKeyEnv = document.getElementById('newProviderEnv').value.trim();
+  if (!label || !apiKeyEnv) return;
+  modelConfig.providers.push({ id: label.toLowerCase().replace(/\s+/g,'-'), label, apiKeyEnv, models: [] });
+  await saveAll();
+  providerModal.classList.remove('open');
+  renderProviders();
+};
+
+const modelModal = document.getElementById('modelModal');
+let modelTargetProviderIndex = null;
+function openModelModal(pIndex){
+  modelTargetProviderIndex = pIndex;
+  document.getElementById('newModelId').value = '';
+  document.getElementById('newModelName').value = '';
+  modelModal.classList.add('open');
+}
+document.getElementById('cancelModelBtn').onclick = () => modelModal.classList.remove('open');
+document.getElementById('confirmModelBtn').onclick = async () => {
+  const id = document.getElementById('newModelId').value.trim();
+  const customName = document.getElementById('newModelName').value.trim() || id;
+  if (!id || modelTargetProviderIndex === null) return;
+  modelConfig.providers[modelTargetProviderIndex].models.push({ id, customName, enabled: true, rules: '' });
+  await saveAll();
+  modelModal.classList.remove('open');
+  renderProviders();
+};
+
+function renderGroups(){
+  const list = document.getElementById('groupList');
+  list.innerHTML = '';
+  if (!modelConfig.linkedModels.length) {
+    list.innerHTML = '<div class="sub">No models yet — create one above.</div>';
+    return;
+  }
+  modelConfig.linkedModels.forEach((group, gIndex) => {
+    if (!group.capabilities) group.capabilities = [];
+    if (!group.composerFeatures) group.composerFeatures = { files: true, photos: true, generateImage: true, generateVideo: true };
+    if (!group.customActions) group.customActions = [];
+    const card = document.createElement('div');
+    card.className = 'group-card';
+    let capsHtml = '';
+    if (!group.capabilities.length) {
+      capsHtml = '<div class="cap-empty">No models added to this bundle yet.</div>';
+    } else {
+      group.capabilities.forEach((cap, cIndex) => {
+        capsHtml += `
+          <div class="cap-row">
+            <div class="cap-info">
+              <span class="cap-type">${cap.type}</span>
+              <span class="cap-target">${findModelLabel(cap) || '(missing)'}</span>
+            </div>
+            <button class="x-btn" data-remove-cap="${gIndex}:${cIndex}">✕</button>
+          </div>`;
+      });
+    }
+
+    let actionsHtml = '';
+    if (!group.customActions.length) {
+      actionsHtml = '<div class="cap-empty">No custom quick actions yet.</div>';
+    } else {
+      group.customActions.forEach((action, aIndex) => {
+        actionsHtml += `
+          <div class="cap-row">
+            <div class="cap-info">
+              <span class="cap-type">Quick action</span>
+              <span class="cap-target">${escapeHtmlAdmin(action.label)}</span>
+            </div>
+            <button class="x-btn" data-remove-action="${gIndex}:${aIndex}">✕</button>
+          </div>`;
+      });
+    }
+
+    card.innerHTML = `
+      <div class="group-head">
+        <h3>${group.name}</h3>
+        <div class="group-head-actions">
+          <button class="remove-btn" data-delete-group="${gIndex}">Delete</button>
+        </div>
+      </div>
+      ${capsHtml}
+      <button class="add-model-btn" data-add-cap="${gIndex}">+ Add a model to this bundle</button>
+
+      <div class="group-footer-row"><span>Enabled</span><div class="toggle ${group.enabled ? 'on' : ''}" data-toggle-enabled="${gIndex}"></div></div>
+      <div class="group-footer-row"><span>Voice replies (free browser voice)</span><div class="toggle ${group.tts ? 'on' : ''}" data-toggle-tts="${gIndex}"></div></div>
+      <div class="group-footer-row"><span>Calculator tool</span><div class="toggle ${(group.tools || []).includes('calculator') ? 'on' : ''}" data-toggle-tool="${gIndex}:calculator"></div></div>
+      <div class="group-footer-row"><span>Date & time tool</span><div class="toggle ${(group.tools || []).includes('datetime') ? 'on' : ''}" data-toggle-tool="${gIndex}:datetime"></div></div>
+
+      <div class="sub" style="margin:14px 0 4px;font-weight:600;color:var(--text)">"+" menu options for this model</div>
+      <div class="group-footer-row"><span>Show: Add files</span><div class="toggle ${group.composerFeatures.files !== false ? 'on' : ''}" data-toggle-feature="${gIndex}:files"></div></div>
+      <div class="group-footer-row"><span>Show: Add photos</span><div class="toggle ${group.composerFeatures.photos !== false ? 'on' : ''}" data-toggle-feature="${gIndex}:photos"></div></div>
+      <div class="group-footer-row"><span>Show: Generate image</span><div class="toggle ${group.composerFeatures.generateImage !== false ? 'on' : ''}" data-toggle-feature="${gIndex}:generateImage"></div></div>
+      <div class="group-footer-row"><span>Show: Generate video</span><div class="toggle ${group.composerFeatures.generateVideo !== false ? 'on' : ''}" data-toggle-feature="${gIndex}:generateVideo"></div></div>
+
+      <div class="sub" style="margin:14px 0 4px;font-weight:600;color:var(--text)">Custom quick actions</div>
+      ${actionsHtml}
+      <button class="add-model-btn" data-add-action="${gIndex}">+ Add a custom quick action</button>
+    `;
+    list.appendChild(card);
+  });
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'save-btn';
+  saveBtn.textContent = 'Save changes';
+  saveBtn.onclick = saveAll;
+  list.appendChild(saveBtn);
+
+  list.querySelectorAll('[data-delete-group]').forEach(btn => {
+    btn.onclick = async () => {
+      modelConfig.linkedModels.splice(Number(btn.dataset.deleteGroup), 1);
+      await saveAll();
+      renderGroups();
+    };
+  });
+  list.querySelectorAll('[data-remove-cap]').forEach(btn => {
+    btn.onclick = async () => {
+      const [gIndex, cIndex] = btn.dataset.removeCap.split(':').map(Number);
+      modelConfig.linkedModels[gIndex].capabilities.splice(cIndex, 1);
+      await saveAll();
+      renderGroups();
+    };
+  });
+  list.querySelectorAll('[data-add-cap]').forEach(btn => {
+    btn.onclick = () => openCapModal(Number(btn.dataset.addCap));
+  });
+  list.querySelectorAll('[data-toggle-enabled]').forEach(el => {
+    el.onclick = async () => {
+      const i = Number(el.dataset.toggleEnabled);
+      modelConfig.linkedModels[i].enabled = !modelConfig.linkedModels[i].enabled;
+      await saveAll();
+      renderGroups();
+    };
+  });
+  list.querySelectorAll('[data-toggle-tts]').forEach(el => {
+    el.onclick = async () => {
+      const i = Number(el.dataset.toggleTts);
+      modelConfig.linkedModels[i].tts = !modelConfig.linkedModels[i].tts;
+      await saveAll();
+      renderGroups();
+    };
+  });
+  list.querySelectorAll('[data-toggle-tool]').forEach(el => {
+    el.onclick = async () => {
+      const [gIndex, toolId] = el.dataset.toggleTool.split(':');
+      const group = modelConfig.linkedModels[Number(gIndex)];
+      if (!group.tools) group.tools = [];
+      const i = group.tools.indexOf(toolId);
+      if (i === -1) group.tools.push(toolId); else group.tools.splice(i, 1);
+      await saveAll();
+      renderGroups();
+    };
+  });
+  list.querySelectorAll('[data-toggle-feature]').forEach(el => {
+    el.onclick = async () => {
+      const [gIndex, key] = el.dataset.toggleFeature.split(':');
+      const group = modelConfig.linkedModels[Number(gIndex)];
+      if (!group.composerFeatures) group.composerFeatures = { files: true, photos: true, generateImage: true, generateVideo: true };
+      group.composerFeatures[key] = group.composerFeatures[key] === false ? true : false;
+      await saveAll();
+      renderGroups();
+    };
+  });
+  list.querySelectorAll('[data-remove-action]').forEach(btn => {
+    btn.onclick = async () => {
+      const [gIndex, aIndex] = btn.dataset.removeAction.split(':').map(Number);
+      modelConfig.linkedModels[gIndex].customActions.splice(aIndex, 1);
+      await saveAll();
+      renderGroups();
+    };
+  });
+  list.querySelectorAll('[data-add-action]').forEach(btn => {
+    btn.onclick = () => openActionModal(Number(btn.dataset.addAction));
+  });
+}
+
+function escapeHtmlAdmin(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+function findModelLabel(cap){
+  const provider = modelConfig.providers.find(p => p.id === cap.providerId);
+  if (!provider) return null;
+  const model = provider.models.find(m => m.id === cap.modelId);
+  if (!model) return null;
+  return `${provider.label} — ${model.customName}`;
+}
+
+const groupModal = document.getElementById('groupModal');
+document.getElementById('addGroupBtn').onclick = () => {
+  document.getElementById('groupName').value = '';
+  groupModal.classList.add('open');
+};
+document.getElementById('cancelGroupBtn').onclick = () => groupModal.classList.remove('open');
+document.getElementById('confirmGroupBtn').onclick = async () => {
+  const name = document.getElementById('groupName').value.trim();
+  if (!name) return;
+  modelConfig.linkedModels.push({
+    id: 'model-' + Date.now(),
+    name,
+    enabled: true,
+    tts: false,
+    capabilities: []
+  });
+  await saveAll();
+  groupModal.classList.remove('open');
+  renderGroups();
+};
+
+const capModal = document.getElementById('capModal');
+let capTargetGroupIndex = null;
+function openCapModal(gIndex){
+  capTargetGroupIndex = gIndex;
+  const select = document.getElementById('capModelSelect');
+  select.innerHTML = '';
+  const opts = flatModelOptions();
+  if (!opts.length) {
+    select.innerHTML = '<option value="">No raw models yet — add one in "Add APIs" first</option>';
+  } else {
+    opts.forEach(opt => { select.innerHTML += `<option value="${opt.value}">${opt.label}</option>`; });
+  }
+  document.getElementById('capType').value = 'chat';
+  capModal.classList.add('open');
+}
+document.getElementById('cancelCapBtn').onclick = () => capModal.classList.remove('open');
+document.getElementById('confirmCapBtn').onclick = async () => {
+  const val = document.getElementById('capModelSelect').value;
+  if (!val || capTargetGroupIndex === null) return;
+  const [providerId, modelId] = val.split('::');
+  const type = document.getElementById('capType').value;
+  modelConfig.linkedModels[capTargetGroupIndex].capabilities.push({ type, providerId, modelId });
+  await saveAll();
+  capModal.classList.remove('open');
+  renderGroups();
+};
+  const actionModal = document.getElementById('actionModal');
+let actionTargetGroupIndex = null;
+function openActionModal(gIndex){
+  actionTargetGroupIndex = gIndex;
+  document.getElementById('actionLabel').value = '';
+  document.getElementById('actionPrompt').value = '';
+  actionModal.classList.add('open');
+}
+document.getElementById('cancelActionBtn').onclick = () => actionModal.classList.remove('open');
+document.getElementById('confirmActionBtn').onclick = async () => {
+  const label = document.getElementById('actionLabel').value.trim();
+  const prompt = document.getElementById('actionPrompt').value.trim();
+  if (!label || !prompt || actionTargetGroupIndex === null) return;
+  const group = modelConfig.linkedModels[actionTargetGroupIndex];
+  if (!group.customActions) group.customActions = [];
+  group.customActions.push({ label, prompt });
+  await saveAll();
+  actionModal.classList.remove('open');
+  renderGroups();
+};
+
+document.getElementById('saveRules').onclick = async () => {
+  await fetch('/api/admin/rules', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ globalRules: document.getElementById('globalRules').value })
+  });
+};
+
+async function loadUsers(){
+  const res = await fetch('/api/admin/users');
+  const data = await res.json();
+  document.getElementById('usersBox').textContent = data.note || JSON.stringify(data);
+}
+</script>
+</body>
+</html>

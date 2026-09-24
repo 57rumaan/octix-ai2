@@ -1,0 +1,32 @@
+{
+  "_comment": "Admin panel reads/writes this file. Each provider holds an API key (from env, never plaintext here) and a list of models with custom names + rules + enabled flag.",
+  "providers": [
+    {
+      "id": "openai",
+      "label": "OpenAI",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "models": [
+        {
+          "id": "gpt-4o",
+          "customName": "Fast Writer",
+          "enabled": false,
+          "rules": ""
+        }
+      ]
+    },
+    {
+      "id": "hugging-face",
+      "label": "Hugging Face",
+      "apiKeyEnv": "HUGGINGFACE_API_KEY",
+      "models": [
+        {
+          "id": "meta-llama/Llama-3.1-8B-Instruct",
+          "customName": "AETHER V1",
+          "enabled": true,
+          "rules": ""
+        }
+      ]
+    }
+  ],
+  "globalRules": ""
+}

@@ -1,0 +1,14 @@
+{
+  "name": "AETHER AI",
+  "short_name": "AETHER AI",
+  "description": "Your one place for every AI model — chat, generate images, and get things done.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0D12",
+  "theme_color": "#0B0D12",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
