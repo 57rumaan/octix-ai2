@@ -160,10 +160,16 @@
 <div class="modal-backdrop" id="providerModal">
   <div class="modal">
     <h3>Add a new API / provider</h3>
-    <label>Provider name (shown to you)</label>
-    <input type="text" id="newProviderLabel" placeholder="e.g. Anthropic, Mistral, ElevenLabs">
+    <label>Provider (only providers with a backend adapter on this server)</label>
+    <select id="newProviderAdapter">
+      <option value="openai">OpenAI</option>
+      <option value="google">Google Gemini</option>
+      <option value="groq">Groq</option>
+      <option value="hugging-face">Hugging Face</option>
+    </select>
     <label>Environment variable name (holds the API key on your server)</label>
-    <input type="text" id="newProviderEnv" placeholder="e.g. ANTHROPIC_API_KEY">
+    <input type="text" id="newProviderEnv" placeholder="e.g. OPENAI_API_KEY">
+    <div class="error" id="providerErr">That provider is already added, or the environment variable name is invalid.</div>
     <div class="modal-actions">
       <button id="cancelProviderBtn">Cancel</button>
       <button class="primary" id="confirmProviderBtn">Add</button>
@@ -270,9 +276,21 @@ document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
 
 let modelConfig = null;
 
+// Must match backend/lib/providers.js — providers without a backend adapter
+// cannot be created here, and existing ones are marked as unusable.
+const SUPPORTED_PROVIDERS = ['openai', 'google', 'groq', 'huggingface', 'hugging-face'];
+const PROVIDER_PRESETS = {
+  openai: { label: 'OpenAI', env: 'OPENAI_API_KEY' },
+  google: { label: 'Google Gemini', env: 'GEMINI_API_KEY' },
+  groq: { label: 'Groq', env: 'GROQ_API_KEY' },
+  'hugging-face': { label: 'Hugging Face', env: 'HUGGINGFACE_API_KEY' }
+};
+
 async function loadModels(){
   const res = await fetch('/api/admin/models');
+  if (!res.ok) { location.reload(); return; } // session expired or server error → back to the login screen
   modelConfig = await res.json();
+  if (!modelConfig.providers) modelConfig.providers = [];
   if (!modelConfig.linkedModels) modelConfig.linkedModels = [];
   document.getElementById('globalRules').value = modelConfig.globalRules || '';
   renderProviders();
@@ -321,6 +339,10 @@ function renderProviders(){
   modelConfig.providers.forEach((provider, pIndex) => {
     const card = document.createElement('div');
     card.className = 'card';
+    const supported = SUPPORTED_PROVIDERS.includes(provider.id);
+    const supportNote = supported
+      ? ''
+      : '<div class="sub" style="color:#ff6b6b;margin:0 0 8px;">No backend adapter for this provider on the server — it can’t be used in a model.</div>';
     card.innerHTML = `
       <div class="provider-row">
         <div>
@@ -329,8 +351,9 @@ function renderProviders(){
         </div>
         <button class="remove-btn" data-remove-provider="${pIndex}">Remove</button>
       </div>
+      ${supportNote}
       <div class="models-container"></div>
-      <button class="add-model-btn" data-add-model="${pIndex}">+ Add a raw model to ${provider.label}</button>
+      <button class="add-model-btn" data-add-model="${pIndex}"${supported ? '' : ' disabled'}>+ Add a raw model to ${provider.label}</button>
     `;
     const modelsContainer = card.querySelector('.models-container');
     provider.models.forEach((model, mIndex) => {
@@ -374,17 +397,31 @@ function renderProviders(){
 }
 
 const providerModal = document.getElementById('providerModal');
+const providerSelect = document.getElementById('newProviderAdapter');
+const providerEnvInput = document.getElementById('newProviderEnv');
+const providerErr = document.getElementById('providerErr');
 document.getElementById('addProviderBtn').onclick = () => {
-  document.getElementById('newProviderLabel').value = '';
-  document.getElementById('newProviderEnv').value = '';
+  providerSelect.value = 'openai';
+  providerEnvInput.value = PROVIDER_PRESETS['openai'].env;
+  providerErr.style.display = 'none';
   providerModal.classList.add('open');
+};
+providerSelect.onchange = () => {
+  const preset = PROVIDER_PRESETS[providerSelect.value];
+  if (preset) providerEnvInput.value = preset.env;
 };
 document.getElementById('cancelProviderBtn').onclick = () => providerModal.classList.remove('open');
 document.getElementById('confirmProviderBtn').onclick = async () => {
-  const label = document.getElementById('newProviderLabel').value.trim();
-  const apiKeyEnv = document.getElementById('newProviderEnv').value.trim();
-  if (!label || !apiKeyEnv) return;
-  modelConfig.providers.push({ id: label.toLowerCase().replace(/\s+/g,'-'), label, apiKeyEnv, models: [] });
+  const id = providerSelect.value;
+  const preset = PROVIDER_PRESETS[id];
+  const apiKeyEnv = providerEnvInput.value.trim();
+  const envOk = /^[A-Za-z][A-Za-z0-9_]*$/.test(apiKeyEnv);
+  const duplicate = modelConfig.providers.some(p => p.id === id);
+  if (!preset || !envOk || duplicate) {
+    providerErr.style.display = 'block';
+    return;
+  }
+  modelConfig.providers.push({ id, label: preset.label, apiKeyEnv, models: [] });
   await saveAll();
   providerModal.classList.remove('open');
   renderProviders();

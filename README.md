@@ -7,16 +7,19 @@ rules set kiye jaate hain.
 ## Folder structure
 ```
 ai-web-app/
-  frontend/          → chat UI (index.html) — end users ye dekhte hain
+  frontend/            → chat UI (index.html) — end users ye dekhte hain
   backend/
-    server.js         → main server, saare routes yahan wire hote hain
+    server.js           → main server, saare routes yahan wire hote hain
+    .env.example        → copy karke .env banayein; saari env vars yahin list hain
+    lib/                → shared helpers (async error handling, rate limiting, env checks)
     routes/
-      auth.js          → user signup/login (email/phone; Google/FB stub)
-      chat.js          → message ko enabled model tak route karta hai
-      admin.js          → admin login + protected admin APIs
-    admin/index.html    → admin dashboard UI — /admin par serve hota hai
-    config/models.json  → kaunse providers/models added hain, kaun enabled hai
-    .env.example         → yahan API keys aur secrets jaate hain
+      auth.js            → user signup/login (email verification via Resend)
+      chat.js            → message ko enabled model tak route karta hai (login required)
+      admin.js           → admin login + protected admin APIs
+    admin/index.html     → admin dashboard UI — /admin par serve hota hai
+    config/store.js      → provider/model settings + users JSONBin.io par store hote hain
+    config/models.json   → purana sample file (ab kahin se bhi load nahi hoti)
+  Dockerfile            → container image (backend + frontend dono)
 ```
 
 ## Local setup (free)
@@ -27,16 +30,26 @@ ai-web-app/
    npm install
    cp .env.example .env
    ```
-3. `.env` file open karke fill karein:
+3. `.env` file open karke fill karein — **4 cheezein required hain** (server inke bina start nahi hota, aur missing variable ka naam clearly print karta hai):
    - `JWT_SECRET` — command diya hua hai .env.example mein, chalayein aur paste karein
    - `ADMIN_PASSWORD_HASH` — apna admin password socho, phir wahi command chalayein
      jo bcrypt hash deti hai, aur wo hash yahan paste karein (plaintext password
      kahin bhi file mein nahi jaata — ye important hai warna app decompile
-     karke koi bhi password nikaal sakta hai)
-   - `OPENAI_API_KEY` / `GEMINI_API_KEY` — jab aap API buy karo tab yahan daalna
-4. Run: `npm start`
-5. Chat app: http://localhost:3000
+     karke koi bhi password nikal sakta hai)
+   - `JSONBIN_BIN_ID` + `JSONBIN_API_KEY` — jsonbin.io par free bin banao aur
+     yahan daalo (provider settings + user accounts permanent yahin store hote hain)
+4. Optional variables (jin feature ko chahiye wahi bharein):
+   - `RESEND_API_KEY` — signup verification email ke liye (na ho to signup clearly error deta hai)
+   - `OPENAI_API_KEY` / `GEMINI_API_KEY` / `GROQ_API_KEY` / `HUGGINGFACE_API_KEY` —
+     jab aap API buy karo tab yahan daalna
+5. Run: `npm start`
+6. Chat app: http://localhost:3000
    Admin panel: http://localhost:3000/admin
+   Health check: http://localhost:3000/api/health
+
+> Chat bhejne ke liye login zaroori hai (email + password). Bina login ke
+> `/api/chat` 401 return karta hai; har IP per basic rate limits bhi lagti hain.
+
 
 ## Admin panel kaise kaam karta hai (secure version)
 - Chat UI mein kahin bhi koi hidden trigger phrase nahi hai — wo approach
@@ -50,33 +63,46 @@ ai-web-app/
   jo har admin action ko verify karta hai.
 
 ## Models/APIs add karna
-`/admin` → "Add / manage APIs" tab:
-- Har provider (OpenAI, Gemini, etc.) ka ek block hai, jisme uski API key
-  `.env` se aati hai (env variable ka naam dikhta hai, key khud kabhi
-  screen par nahi aati)
-- Har model ko custom naam de sakte hain, enable/disable toggle hai
-- Naya provider add karne ke liye: `backend/config/models.json` mein ek
-  naya block add karein, aur `backend/routes/chat.js` ke `callProvider()`
-  function mein us provider ke liye ek naya `if` block likhein jo uski
-  API ko call kare (jaisa OpenAI/Gemini ke liye already hai)
+`/admin` → "Add APIs" tab:
+- Sirf unhi providers ko add kar sakte hain jinke liye backend mein adapter
+  already hai: **OpenAI, Google Gemini, Groq, Hugging Face**
+  (`backend/lib/providers.js` — isi list se admin panel provider options
+  dikhata hai, aur server naye unsupported provider ko save karne se rok deta hai)
+- Har provider ka block dikhta hai, jisme uski API key `.env` se aati hai
+  (env variable ka naam dikhta hai, key khud kabhi screen par nahi aati)
+- "Models" tab mein group/bundle banakar chat + image models ko ek naam ke
+  neeche joda jaata hai; wahi group chat app ke model picker mein dikhta hai
+- Naya provider type (jaise Anthropic/Mistral) jodne ke liye: `backend/lib/providers.js`
+  ki list mein id add karein, aur `backend/routes/chat.js` ke `callProvider()`
+  mein us provider ke liye ek naya `if` block likhein (jaisa OpenAI/Gemini/
+  Groq ke liye already hai)
 
-## Baaki features jo abhi UI mein hain, backend wiring baaki hai
-- Image/video generation, text-to-voice, voice-to-text: composer ke
-  "+" menu mein options already hain — inhe kaam karne ke liye jo bhi
-  provider aap choose karein (jaise ElevenLabs for voice, Runway/Stability
-  for image-video), uske liye bhi `callProvider()` jaisa ek function
-  `chat.js` mein add hoga
-- Real user database: abhi `auth.js` mein users memory mein store hote
-  hain (server restart pe delete ho jaate hain) — Firebase Auth ya
-  Supabase (dono free tier dete hain) laga kar isko permanent banayein
-- Google/Facebook login: Firebase Authentication sabse fast free tarika
-  hai in dono ko ek saath enable karne ka
+## Abhi kya kaam karta hai / kya baaki hai
+- Chat: login required hai; global rules + per-model rules dono lagte hain
+  (OpenAI, Gemini, Groq, Hugging Face par) — aur har IP per basic rate limits
+- Image generation: group mein image model ho to wahi use hota hai, warna
+  free fallback generator (frontend ke existing fallback se)
+- Voice output: browser ki apni speech synthesis (group ka "Voice replies"
+  toggle); voice input: browser speech recognition (Chrome/Edge)
+- Video generation: abhi placeholder modal hai (paid key chahiye hogi)
+- Files (docs/PDF): UI mein chip dikhta hai, par abhi backend tak nahi
+  pahunchta — sirf images backend ko bheji ja sakti hain
+- User accounts: JSONBin mein permanent store hote hain (bcrypt hashed
+  passwords); admin config save kabhi `users` array ko overwrite nahi karta
+- Google/Facebook login: OAuth abhi stub hai (501) — Firebase Authentication
+  sabse fast free tarika hai in dono ko ek saath enable karne ka
 
 ## Free/cheap hosting (jab live karna ho)
 - **Render.com** ya **Railway.app** — Node backend free tier
+- Docker image repo ke root `Dockerfile` se banti hai (backend + frontend
+  dono andar hote hain): `docker build -t aether-ai .` aur phir
+  `docker run -p 3000:3000 --env-file backend/.env aether-ai`
+  (image `/api/health` par health check karti hai)
 - **Firebase Hosting** — frontend ke liye free
 - Domain optional hai; free subdomain (jaise `yourapp.onrender.com`) se
   bhi shuru kar sakte hain
+- Deploy karte waqt upar wali saari env vars Render/Railway ke "Environment"
+  section mein daalein (file wahan nahi jaati)
 
 ## Android app baad mein
 Jab APK banani ho, ye web app already ready hoga — WebView wrapper

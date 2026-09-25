@@ -1,0 +1,15 @@
+# Never ship secrets or local state into the image
+.env
+**/.env
+backend/.env
+
+# Dependencies are installed inside the image with `npm ci`
+**/node_modules
+
+# VCS / docs / OS junk
+.git
+.gitignore
+README.md
+**/*.log
+.DS_Store
+Thumbs.db

@@ -819,9 +819,18 @@ async function sendMessage(){
         imageDataUrl: imageAttachment ? imageAttachment.dataUrl : undefined
       })
     });
-    const data = await res.json();
-    const replyText = data.reply || 'No response.';
+    const data = await res.json().catch(() => ({}));
     loadingRow.remove();
+    if (res.status === 401) {
+      // chat now requires a logged-in account — show why and open the login box
+      addMessage('ai', data.error || 'Please log in to continue.', 'system');
+      authIdentifierInput.value = '';
+      authPasswordInput.value = '';
+      setAuthMode('login');
+      authModal.classList.add('open');
+      return;
+    }
+    const replyText = data.reply || data.error || (res.ok ? 'No response.' : 'Request failed. Try again.');
     addMessage('ai', formatAiText(replyText), data.model);
     if (selectedTtsEnabled) speakText(replyText);
   } catch (err) {
