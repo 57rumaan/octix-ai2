@@ -42,4 +42,4 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`AETHER AI server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Octix AI server running on http://localhost:${PORT}`));

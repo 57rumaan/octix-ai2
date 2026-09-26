@@ -52,9 +52,9 @@ async function sendVerificationEmail(toEmail, code) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      from: 'AETHER AI <onboarding@resend.dev>',
+      from: 'Octix AI <onboarding@resend.dev>',
       to: [toEmail],
-      subject: 'Your AETHER AI verification code',
+      subject: 'Your Octix AI verification code',
       html: `<p>Your verification code is:</p><h2 style="letter-spacing:4px">${code}</h2><p>This code expires in 10 minutes.</p>`
     })
   });

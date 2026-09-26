@@ -3,14 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AETHER AI — Admin</title>
+<title>Octix AI — Admin</title>
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="stylesheet" href="/tokens.css">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0B0D12;--surface:#14161D;--raised:#1B1E27;--border:#262A35;
-    --accent:#6C8EF5;--warm:#E8A253;--text:#EDEFF3;--muted:#8891A3;--faint:#565C6D;
-    --font-d:'Space Grotesk',sans-serif;--font-b:'Inter',sans-serif;--font-m:'JetBrains Mono',monospace;
-  }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;}
   .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
@@ -19,8 +16,8 @@
   .login-card p{color:var(--muted);font-size:12.5px;line-height:1.5;}
   input,select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;}
   input:focus,select:focus,textarea:focus{border-color:var(--accent);}
-  button.primary{background:var(--accent);color:#0B0D12;border:none;border-radius:9px;padding:11px;font-weight:600;font-size:14px;}
-  .error{color:#ff6b6b;font-size:12.5px;display:none;}
+  button.primary{background:var(--accent);color:var(--color-on-accent);border:none;border-radius:9px;padding:11px;font-weight:600;font-size:14px;}
+  .error{color:var(--color-danger);font-size:12.5px;display:none;}
 
   .dash{display:none;}
   .dash.active{display:block;}
@@ -50,12 +47,12 @@
   .provider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
   .provider-row h3{font-size:14.5px;}
   .provider-row .env{font-family:var(--font-m);font-size:11px;color:var(--warm);}
-  .remove-btn{background:transparent;border:none;color:#ff6b6b;font-size:12px;padding:4px 8px;border-radius:6px;flex-shrink:0;}
-  .remove-btn:hover{background:rgba(255,107,107,.1);}
+  .remove-btn{background:transparent;border:none;color:var(--color-danger);font-size:12px;padding:4px 8px;border-radius:6px;flex-shrink:0;}
+  .remove-btn:hover{background:var(--color-danger-faint);}
   .model-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--border);}
   .model-row input[type=text]{flex:1;padding:7px 10px;font-size:13px;min-width:0;}
   .model-row .model-id{font-family:var(--font-m);font-size:10.5px;color:var(--muted);flex-shrink:0;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .model-row .x-btn{background:transparent;border:none;color:#ff6b6b;font-size:15px;padding:2px 4px;flex-shrink:0;}
+  .model-row .x-btn{background:transparent;border:none;color:var(--color-danger);font-size:15px;padding:2px 4px;flex-shrink:0;}
   .add-btn{width:100%;background:var(--raised);border:1px dashed var(--border);color:var(--muted);padding:12px;border-radius:10px;font-size:13.5px;margin-bottom:14px;}
   .add-btn:hover{border-color:var(--accent);color:var(--text);}
   .add-model-btn{margin-top:9px;background:transparent;border:1px dashed var(--border);color:var(--muted);padding:7px 10px;border-radius:8px;font-size:12.5px;width:100%;}
@@ -86,7 +83,7 @@
   .modal label{font-size:12px;color:var(--muted);margin-bottom:-4px;}
   .modal-actions{display:flex;gap:8px;margin-top:6px;}
   .modal-actions button{flex:1;padding:9px;border-radius:8px;font-size:13px;border:1px solid var(--border);background:var(--raised);color:var(--text);}
-  .modal-actions button.primary{background:var(--accent);color:#0B0D12;border:none;}
+  .modal-actions button.primary{background:var(--accent);color:var(--color-on-accent);border:none;}
 </style>
 </head>
 <body>
@@ -106,7 +103,7 @@
     <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <h2>AETHER AI Admin</h2>
+    <h2>Octix AI Admin</h2>
   </div>
 
   <div class="backdrop" id="backdrop"></div>
@@ -195,7 +192,7 @@
   <div class="modal">
     <h3>Create a model</h3>
     <label>Name (shown in the chat app's model picker)</label>
-    <input type="text" id="groupName" placeholder="e.g. AETHER UPGRADED">
+    <input type="text" id="groupName" placeholder="e.g. Octix UPGRADED">
     <div class="modal-actions">
       <button id="cancelGroupBtn">Cancel</button>
       <button class="primary" id="confirmGroupBtn">Create</button>
@@ -308,17 +305,17 @@ async function saveAll(){
     if (!res.ok) {
       let msg = 'Save failed (status ' + res.status + ')';
       try { const data = await res.json(); if (data.error) msg = 'Save failed: ' + data.error; } catch {}
-      if (statusEl) { statusEl.style.color = '#ff6b6b'; statusEl.textContent = msg; }
+      if (statusEl) { statusEl.style.color = 'var(--color-danger)'; statusEl.textContent = msg; }
       return false;
     }
     if (statusEl) {
-      statusEl.style.color = '#7ee787';
+      statusEl.style.color = 'var(--color-success)';
       statusEl.textContent = 'Saved ✓';
       setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 1500);
     }
     return true;
   } catch (err) {
-    if (statusEl) { statusEl.style.color = '#ff6b6b'; statusEl.textContent = 'Save failed — could not reach the server.'; }
+    if (statusEl) { statusEl.style.color = 'var(--color-danger)'; statusEl.textContent = 'Save failed — could not reach the server.'; }
     return false;
   }
 }
@@ -342,7 +339,7 @@ function renderProviders(){
     const supported = SUPPORTED_PROVIDERS.includes(provider.id);
     const supportNote = supported
       ? ''
-      : '<div class="sub" style="color:#ff6b6b;margin:0 0 8px;">No backend adapter for this provider on the server — it can’t be used in a model.</div>';
+      : '<div class="sub" style="color:var(--color-danger);margin:0 0 8px;">No backend adapter for this provider on the server — it can’t be used in a model.</div>';
     card.innerHTML = `
       <div class="provider-row">
         <div>

@@ -3,30 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AETHER AI — AI Hub</title>
-  <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0B0D12">
+<title>Octix AI — AI Hub</title>
+
+<!-- Theme must be known BEFORE any CSS applies: read the stored preference
+     ("octixTheme": "dark" | "light") and set data-theme with no flash.
+     Absent/invalid value => dark (the app's unchanged default appearance). -->
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('octixTheme');
+    if (t !== 'light' && t !== 'dark') t = 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+</script>
+
+<!-- Shared design tokens (colors/typography/spacing/radius/shadows/
+     transitions/layout) — used by this page AND /admin -->
+<link rel="stylesheet" href="/tokens.css">
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0B0D12" id="themeColorMeta">
+<link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Octix AI — one place for every AI model. Chat, generate images, and get things done in a single conversation.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Octix AI — AI Hub">
+<meta property="og:description" content="Octix AI — one place for every AI model. Chat, generate images, and get things done in a single conversation.">
+<meta property="og:image" content="/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Octix AI — AI Hub">
+<meta name="twitter:description" content="Octix AI — one place for every AI model. Chat, generate images, and get things done in a single conversation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg-void:#0B0D12;
-    --surface:#14161D;
-    --surface-raised:#1B1E27;
-    --surface-hover:#20232E;
-    --border:#262A35;
-    --accent:#6C8EF5;
-    --accent-dim:#3E4A73;
-    --warm:#E8A253;
-    --text-primary:#EDEFF3;
-    --text-muted:#8891A3;
-    --text-faint:#565C6D;
-    --radius:14px;
-    --font-display:'Space Grotesk',sans-serif;
-    --font-body:'Inter',sans-serif;
-    --font-mono:'JetBrains Mono',monospace;
-  }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;}
   body{
@@ -138,7 +152,7 @@
   .model-picker:hover{background:var(--surface-hover);}
   .model-picker .badge{
     font-family:var(--font-mono);font-size:10.5px;color:var(--accent);
-    background:rgba(108,142,245,.12);padding:2px 6px;border-radius:5px;letter-spacing:.3px;
+    background:var(--color-accent-soft);padding:2px 6px;border-radius:5px;letter-spacing:.3px;
   }
   .model-dropdown{
     position:absolute;top:44px;left:0;
@@ -153,7 +167,7 @@
     padding:9px 10px;border-radius:8px;color:var(--text-primary);font-size:13.5px;
   }
   .model-dropdown button:hover{background:var(--surface-hover);}
-  .model-dropdown button.active{background:rgba(108,142,245,.15);color:var(--accent);}
+  .model-dropdown button.active{background:var(--color-accent-soft-strong);color:var(--accent);}
   .model-dropdown .empty{color:var(--text-faint);font-size:12.5px;padding:9px 10px;}
 
   .chat-area{
@@ -187,7 +201,7 @@
   }
   .msg.user{flex-direction:row-reverse;}
   .msg.user .avatar{background:var(--surface-raised);color:var(--text-muted);}
-  .msg.ai .avatar{background:linear-gradient(135deg,var(--accent),var(--warm));color:#0B0D12;}
+  .msg.ai .avatar{background:linear-gradient(135deg,var(--accent),var(--warm));color:var(--color-on-accent);}
   .msg-bubble{
     padding:12px 15px;border-radius:14px;font-size:14.5px;line-height:1.65;max-width:100%;
   }
@@ -197,11 +211,11 @@
     font-family:var(--font-mono);font-size:10px;color:var(--text-faint);
     margin-bottom:5px;letter-spacing:.3px;
   }
+  .msg-bubble img.generated, .msg-bubble img.attached-preview{cursor:pointer;}
   .msg-bubble img.generated{
     max-width:100%;border-radius:12px;margin-top:6px;display:block;
   }
   .msg-bubble img.attached-preview{
-    .msg-bubble img.generated, .msg-bubble img.attached-preview{cursor:pointer;}
     max-width:220px;border-radius:10px;margin-top:6px;display:block;
   }
   .copy-btn{
@@ -220,7 +234,7 @@
   .chat-item-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
   .chat-item-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
   .chat-delete-btn{background:transparent;border:none;color:var(--text-faint);font-size:12px;padding:2px 6px;border-radius:5px;flex-shrink:0;}
-  .chat-delete-btn:hover{background:rgba(255,107,107,.15);color:#ff6b6b;}
+  .chat-delete-btn:hover{background:var(--color-danger-soft);color:var(--color-danger);}
 
   .composer-wrap{padding:14px 20px 20px;display:flex;justify-content:center;flex-shrink:0;}
   .composer{
@@ -273,11 +287,11 @@
   .spacer{flex:1;}
   .send-btn{
     width:36px;height:36px;border-radius:50%;border:none;
-    background:var(--accent);color:#0B0D12;
+    background:var(--accent);color:var(--color-on-accent);
     display:flex;align-items:center;justify-content:center;
   }
-  .send-btn:hover{background:#7d9cf7;}
-  .mic-btn.recording{color:#ff6b6b;}
+  .send-btn:hover{background:var(--color-accent-hover);}
+  .mic-btn.recording{color:var(--color-danger);}
   .composer-hint{
     text-align:center;color:var(--text-faint);font-size:11px;margin-top:10px;
   }
@@ -304,11 +318,15 @@
     color:var(--text-muted);font-size:13px;
   }
   .modal-tabs button.active{background:var(--surface-raised);color:var(--text-primary);border-color:var(--accent-dim);}
-  .modal-error{color:#ff6b6b;font-size:12px;display:none;}
+  .modal-error{color:var(--color-danger);font-size:12px;display:none;}
+  .theme-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text-muted);}
+  .theme-seg{display:flex;gap:4px;}
+  .theme-seg button{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-raised);color:var(--text-muted);font-size:12.5px;}
+  .theme-seg button.active{background:var(--color-accent-soft-strong);color:var(--accent);border-color:var(--accent-dim);}
   .modal-actions{display:flex;gap:8px;margin-top:6px;}
   .modal-actions button{flex:1;padding:10px;border-radius:9px;font-size:13.5px;border:1px solid var(--border);background:var(--surface-raised);color:var(--text-primary);}
-  .modal-actions button.primary{background:var(--accent);color:#0B0D12;border:none;font-weight:600;}
-  .danger-btn{margin-top:6px;background:transparent;border:1px solid #ff6b6b;color:#ff6b6b;padding:10px;border-radius:9px;font-size:13px;width:100%;}
+  .modal-actions button.primary{background:var(--accent);color:var(--color-on-accent);border:none;font-weight:600;}
+  .danger-btn{margin-top:6px;background:transparent;border:1px solid var(--color-danger);color:var(--color-danger);padding:10px;border-radius:9px;font-size:13px;width:100%;}
 </style>
 </head>
 <body>
@@ -317,7 +335,7 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
-    <div class="brand"><span class="dot"></span>AETHER AI</div>
+    <div class="brand"><span class="dot"></span>Octix AI</div>
     <button class="icon-btn" id="closeSidebarBtn" title="Close">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
@@ -357,7 +375,7 @@
 
   <div class="chat-area" id="chatArea">
     <div class="empty-state" id="emptyState">
-      <h1>Welcome to AETHER AI</h1>
+      <h1>Welcome to Octix AI</h1>
       <p>Your one place for every model — chat, generate images, and get things done, all in a single conversation.</p>
       <div class="suggestion-row">
         <div class="suggestion-chip">Generate a logo concept</div>
@@ -371,7 +389,7 @@
   <div class="composer-wrap">
     <div class="composer">
       <div class="attachment-row" id="attachmentRow"></div>
-      <textarea id="input" rows="1" placeholder="Message AETHER AI..."></textarea>
+      <textarea id="input" rows="1" placeholder="Message Octix AI..."></textarea>
       <div class="composer-row">
         <div class="plus-wrap">
           <button class="round-btn" id="plusBtn">
@@ -389,7 +407,7 @@
       </div>
     </div>
   </div>
-  <div class="composer-hint">Aether Ai Can Make Mistake. Check Info.</div>
+  <div class="composer-hint">Octix AI can make mistakes. Check important information.</div>
 </main>
 
 <input type="file" id="fileInput" style="display:none">
@@ -419,6 +437,13 @@
   <div class="modal">
     <h3>Account</h3>
     <p class="hint" id="settingsEmail"></p>
+    <div class="theme-row">
+      <span>Theme</span>
+      <div class="theme-seg" id="themeSeg">
+        <button id="themeDarkBtn">Dark</button>
+        <button id="themeLightBtn">Light</button>
+      </div>
+    </div>
     <div class="modal-actions">
       <button id="settingsLogoutBtn">Log out</button>
       <button id="cancelSettingsBtn">Close</button>
@@ -452,6 +477,8 @@
   <img id="lightboxImg" style="max-width:100%;max-height:90vh;border-radius:10px;display:block;">
   </div>
 
+<!-- chat storage + v:2 lazy migration module (must load before the app script) -->
+<script src="/chat-store.js"></script>
 <script>
 // ================= Sidebar =================
 const sidebar = document.getElementById('sidebar');
@@ -625,6 +652,7 @@ function addMessage(role, html, modelTag){
   const isLoading = modelTag === null;
   const row = document.createElement('div');
   row.className = 'msg ' + role;
+  row.setAttribute('data-ts', String(Date.now())); // per-message timestamp for the v:2 schema
   row.innerHTML =
     '<div class="avatar">' + (role === 'user' ? 'You' : 'AI') + '</div>' +
     '<div class="msg-bubble">' +
@@ -639,37 +667,77 @@ function addMessage(role, html, modelTag){
 }
 
 // ================= Multi-chat history =================
-function loadChats(){
-  try { return JSON.parse(localStorage.getItem('aetherChats') || '[]'); } catch (e) { return []; }
+// All persistence lives in /chat-store.js (window.OctixChatStore). It owns the
+// two legacy localStorage keys (aetherChats / aetherActiveChatId — never
+// renamed) and the v:2 schema + lazy per-chat migration.
+const Store = window.OctixChatStore;
+
+function loadChats(){ return Store.loadChats(); }
+function saveChats(chats){ return Store.saveChats(chats); }
+function createChatId(){ return Store.createChatId(); }
+let activeChatId = Store.loadActiveId() || createChatId();
+
+// If save fails (e.g. QuotaExceededError) the store logs it and preserves the
+// previous stored value; surface a short user-visible warning too.
+let storageWarnTimer = null;
+function persistChats(chats){
+  const ok = saveChats(chats);
+  if (!ok) {
+    const hint = document.querySelector('.composer-hint');
+    if (hint) {
+      const original = hint.textContent;
+      hint.textContent = 'Could not save chat history — free up some browser storage.';
+      hint.style.color = 'var(--color-danger)';
+      clearTimeout(storageWarnTimer);
+      storageWarnTimer = setTimeout(() => { hint.textContent = original; hint.style.color = ''; }, 5000);
+    }
+  }
+  return ok;
 }
-function saveChats(chats){
-  try { localStorage.setItem('aetherChats', JSON.stringify(chats)); } catch (e) {}
+
+// Lazy migration: upgrade THIS chat only, only when it is actually opened.
+// Original html is kept by migrateChat; a failed parse keeps the entry as-is.
+function migrateOnLoad(chat){
+  if (!chat) return chat;
+  const upgraded = Store.migrateChat(chat);
+  if (upgraded !== chat) {
+    const chats = loadChats();
+    const i = chats.findIndex(c => c && c.id === chat.id);
+    if (i !== -1) { chats[i] = upgraded; persistChats(chats); }
+  }
+  return upgraded;
 }
-function createChatId(){ return 'chat-' + Date.now(); }
-let activeChatId = localStorage.getItem('aetherActiveChatId') || createChatId();
+
+function chatHtmlOf(chat){
+  return (chat && typeof chat.html === 'string') ? chat.html : '';
+}
 
 function saveChatHistory(){
   if (!messages.innerHTML.trim()) return;
   const chats = loadChats();
   const firstUserMsg = messages.querySelector('.msg.user .msg-text');
   const title = firstUserMsg ? firstUserMsg.innerText.slice(0, 40) : 'New chat';
-  let chat = chats.find(c => c.id === activeChatId);
+  const now = Date.now();
+  let chat = chats.find(c => c && c.id === activeChatId);
   if (!chat) {
-    chat = { id: activeChatId, title: title, savedAt: Date.now(), html: messages.innerHTML };
+    chat = { id: activeChatId, title: title, createdAt: now, savedAt: now, html: messages.innerHTML };
     chats.unshift(chat);
   } else {
     chat.html = messages.innerHTML;
     chat.title = title;
-    chat.savedAt = Date.now();
+    chat.savedAt = now;
   }
-  saveChats(chats);
-  localStorage.setItem('aetherActiveChatId', activeChatId);
+  // v:2 + messages[] built from the live DOM; html kept for rollback/rendering
+  Store.toCurrent(chat, messages, now);
+  persistChats(chats);
+  Store.saveActiveId(activeChatId);
   renderChatList();
 }
 
 function renderChatList(){
   const chatListEl = document.getElementById('chatList');
-  const chats = loadChats().sort((a, b) => b.savedAt - a.savedAt);
+  // tolerate malformed entries (skip them, never crash the list)
+  const chats = loadChats().filter(c => c && typeof c === 'object').sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
   chatListEl.innerHTML = '';
   if (!chats.length) {
     chatListEl.innerHTML = '<div style="padding:8px 16px;color:var(--text-faint);font-size:12.5px;">No chats yet</div>';
@@ -696,9 +764,9 @@ function switchChat(id){
   if (id === activeChatId) { closeSidebar(); return; }
   saveChatHistory();
   activeChatId = id;
-  localStorage.setItem('aetherActiveChatId', id);
-  const chat = loadChats().find(c => c.id === id);
-  messages.innerHTML = chat ? chat.html : '';
+  Store.saveActiveId(id);
+  const chat = migrateOnLoad(loadChats().find(c => c && c.id === id));
+  messages.innerHTML = chatHtmlOf(chat);
   emptyState.style.display = messages.innerHTML.trim() ? 'none' : 'flex';
   attachCopyHandlers();
   renderChatList();
@@ -706,12 +774,12 @@ function switchChat(id){
 }
 
 function deleteChat(id){
-  const chats = loadChats().filter(c => c.id !== id);
-  saveChats(chats);
+  const chats = loadChats().filter(c => c && c.id !== id);
+  persistChats(chats);
   if (id === activeChatId) {
     if (chats.length) {
       activeChatId = chats[0].id;
-      messages.innerHTML = chats[0].html;
+      messages.innerHTML = chatHtmlOf(chats[0]);
       emptyState.style.display = 'none';
       attachCopyHandlers();
     } else {
@@ -719,17 +787,16 @@ function deleteChat(id){
       messages.innerHTML = '';
       emptyState.style.display = 'flex';
     }
-    localStorage.setItem('aetherActiveChatId', activeChatId);
+    Store.saveActiveId(activeChatId);
   }
   renderChatList();
 }
 
 function loadChatHistory(){
-  const chat = loadChats().find(c => c.id === activeChatId);
+  const chat = migrateOnLoad(loadChats().find(c => c && c.id === activeChatId));
   if (chat) {
-    messages.innerHTML = chat.html;
-    emptyState.style.display = 'none';
-    emptyState.style.display = 'none';
+    messages.innerHTML = chatHtmlOf(chat);
+    emptyState.style.display = messages.innerHTML.trim() ? 'none' : 'flex';
     attachCopyHandlers();
   }
   renderChatList();
@@ -738,7 +805,7 @@ function loadChatHistory(){
 document.getElementById('newChatBtn').onclick = () => {
   saveChatHistory();
   activeChatId = createChatId();
-  localStorage.setItem('aetherActiveChatId', activeChatId);
+  Store.saveActiveId(activeChatId);
   messages.innerHTML = '';
   emptyState.style.display = 'flex';
   renderChatList();
@@ -1064,6 +1131,29 @@ micBtn.onclick = () => {
   recognizing = true; micBtn.classList.add('recording'); recognition.start();
 };
   
+// ================= Theme (octixTheme: "dark" | "light"; absent => dark) =================
+const THEME_KEY = 'octixTheme';
+const themeDarkBtn = document.getElementById('themeDarkBtn');
+const themeLightBtn = document.getElementById('themeLightBtn');
+const themeColorMeta = document.getElementById('themeColorMeta');
+
+function currentTheme(){
+  const t = document.documentElement.getAttribute('data-theme');
+  return t === 'light' ? 'light' : 'dark';
+}
+function applyTheme(t){
+  const theme = t === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) { console.error('Could not save theme preference:', e); }
+  if (themeColorMeta) themeColorMeta.setAttribute('content', theme === 'light' ? '#F7F8FA' : '#0B0D12');
+  themeDarkBtn.classList.toggle('active', theme === 'dark');
+  themeLightBtn.classList.toggle('active', theme === 'light');
+}
+themeDarkBtn.onclick = () => applyTheme('dark');
+themeLightBtn.onclick = () => applyTheme('light');
+// keep the segmented control in sync whenever the Account modal opens
+authBtn.addEventListener('click', () => { themeDarkBtn.classList.toggle('active', currentTheme() === 'dark'); themeLightBtn.classList.toggle('active', currentTheme() === 'light'); });
+
 // ================= Image preview (lightbox) =================
 const imageLightbox = document.getElementById('imageLightbox');
 const lightboxImg = document.getElementById('lightboxImg');
@@ -1079,6 +1169,9 @@ imageLightbox.onclick = () => imageLightbox.classList.remove('open');
 loadModelList();
 loadChatHistory();
 checkLoginState();
+// sync the theme toggle's active state without writing to storage
+themeDarkBtn.classList.toggle('active', currentTheme() === 'dark');
+themeLightBtn.classList.toggle('active', currentTheme() === 'light');
 </script>
 </body>
 </html>

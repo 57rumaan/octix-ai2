@@ -1,4 +1,4 @@
-# AETHER AI — Multi-Model AI Web App
+# Octix AI — Multi-Model AI Web App
 
 Ek chat web app jo multiple AI models ko route karta hai, plus ek alag,
 password-protected admin panel jahan se models add/enable/disable aur
@@ -6,7 +6,7 @@ rules set kiye jaate hain.
 
 ## Folder structure
 ```
-ai-web-app/
+octix-ai-main/
   frontend/            → chat UI (index.html) — end users ye dekhte hain
   backend/
     server.js           → main server, saare routes yahan wire hote hain
@@ -23,11 +23,12 @@ ai-web-app/
 ```
 
 ## Local setup (free)
-1. Node.js install karein (nodejs.org se, free)
+1. Node.js install karein (nodejs.org se, free) — **version 18 ya usse
+   upar** chahiye (bcrypt + modern JS features use hote hain)
 2. Terminal mein:
    ```
    cd backend
-   npm install
+   npm ci          (ya npm install)
    cp .env.example .env
    ```
 3. `.env` file open karke fill karein — **4 cheezein required hain** (server inke bina start nahi hota, aur missing variable ka naam clearly print karta hai):
@@ -48,7 +49,8 @@ ai-web-app/
    Health check: http://localhost:3000/api/health
 
 > Chat bhejne ke liye login zaroori hai (email + password). Bina login ke
-> `/api/chat` 401 return karta hai; har IP per basic rate limits bhi lagti hain.
+> `/api/chat` 401 return karta hai; chat/image endpoints per **per-user**
+> rate limits bhi lagti hain (IP ke saath, taaki ek hi account se flood na ho).
 
 
 ## Admin panel kaise kaam karta hai (secure version)
@@ -61,6 +63,8 @@ ai-web-app/
   `.env` mein hota hai, server par.
 - Login successful hone par ek time-limited session token (JWT) milta hai,
   jo har admin action ko verify karta hai.
+- Admin ka login credential sirf `ADMIN_PASSWORD_HASH` env se aata hai —
+  koi separate user table nahi hai.
 
 ## Models/APIs add karna
 `/admin` → "Add APIs" tab:
@@ -79,7 +83,7 @@ ai-web-app/
 
 ## Abhi kya kaam karta hai / kya baaki hai
 - Chat: login required hai; global rules + per-model rules dono lagte hain
-  (OpenAI, Gemini, Groq, Hugging Face par) — aur har IP per basic rate limits
+  (OpenAI, Gemini, Groq, Hugging Face par) — aur per-user + per-IP rate limits
 - Image generation: group mein image model ho to wahi use hota hai, warna
   free fallback generator (frontend ke existing fallback se)
 - Voice output: browser ki apni speech synthesis (group ka "Voice replies"
@@ -89,16 +93,23 @@ ai-web-app/
   pahunchta — sirf images backend ko bheji ja sakti hain
 - User accounts: JSONBin mein permanent store hote hain (bcrypt hashed
   passwords); admin config save kabhi `users` array ko overwrite nahi karta
+- Chat history: browser ke **localStorage** mein save hoti hai (login nahi
+  chahiye); data sirf usi browser/device par dikhega. Naya schema `v: 2`
+  hai aur purane chats app khud upgrade kar leta hai (migration lazy hai —
+  sirf chat khulne/save hone par chalta hai)
 - Google/Facebook login: OAuth abhi stub hai (501) — Firebase Authentication
   sabse fast free tarika hai in dono ko ek saath enable karne ka
 
 ## Free/cheap hosting (jab live karna ho)
 - **Render.com** ya **Railway.app** — Node backend free tier
 - Docker image repo ke root `Dockerfile` se banti hai (backend + frontend
-  dono andar hote hain): `docker build -t aether-ai .` aur phir
-  `docker run -p 3000:3000 --env-file backend/.env aether-ai`
+  dono andar hote hain): `docker build -t octix-ai .` aur phir
+  `docker run -p 3000:3000 --env-file backend/.env octix-ai`
   (image `/api/health` par health check karti hai)
-- **Firebase Hosting** — frontend ke liye free
+- **Firebase Hosting** — sirf static `frontend/` files ke liye; kyunki app
+  `/api/*` routes apne hi backend se maangta hai, backend ko alag (Render/
+  Railway) par deploy karke proxy/setup karna padega. Simple tarika: poora
+  app (backend + frontend) hi Render/Railway par chalao.
 - Domain optional hai; free subdomain (jaise `yourapp.onrender.com`) se
   bhi shuru kar sakte hain
 - Deploy karte waqt upar wali saari env vars Render/Railway ke "Environment"
